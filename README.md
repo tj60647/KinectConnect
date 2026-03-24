@@ -138,6 +138,41 @@ KinectConnect/
 
 ---
 
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3000` | TCP port the server listens on |
+| `KINECT_VERSION` | `2` | Sensor to open at startup: `1`, `2`, or `mock` |
+| `TLS_CERT` | _(unset)_ | Path to a PEM certificate file. Required to enable WSS. |
+| `TLS_KEY` | _(unset)_ | Path to a PEM private-key file. Required to enable WSS. |
+
+When both `TLS_CERT` and `TLS_KEY` are set the server starts an HTTPS listener and all WebSocket connections use `wss://`. Without them the server falls back to plain HTTP/WS.
+
+### Enabling WSS locally with a self-signed certificate
+
+```bash
+# Generate a self-signed cert (valid for localhost, 365 days)
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout localhost.key -out localhost.crt \
+  -days 365 -subj "/CN=localhost"
+
+# Start the server with TLS
+TLS_CERT=localhost.crt TLS_KEY=localhost.key npm run dev
+```
+
+The server will print:
+```
+KinectConnect server listening on https://localhost:3000
+WebSocket endpoint: wss://localhost:3000
+```
+
+In the browser, open `https://localhost:3000` (accept the self-signed cert warning), then select `wss://localhost:3000` from the **Server** dropdown. Because the page is now served over `https:` the client's auto-detection also switches to `wss://` automatically when the preset is set to `auto (same host)`.
+
+> **Note:** Browsers will reject a self-signed certificate unless you explicitly trust it or navigate to `https://localhost:3000` and click through the warning first.
+
+---
+
 ## Shared Protocol
 
 `shared/protocol.js` is the single source of truth for every WebSocket message shape. It is a UMD module that loads without a bundler in both environments:
@@ -215,6 +250,8 @@ All streams and controls are enabled. Use this mode for open exploration, critiq
 | `Kinect not detected` / falls back to Mock | Kinect SDK or USB issue | Check Device Manager for the Kinect entry; try a different USB 3.0 port; verify Kinect SDK 2.0 is installed |
 | Protocol version mismatch warning in console | Client and server built from different versions | Rebuild the server (`npm run build`) and hard-refresh the browser (Ctrl+Shift+R) |
 | Port 3000 already in use | Another process is on port 3000 | Set `PORT=3001 npm run dev`, then open `http://localhost:3001/gallery.html` |
+| `wss://` connection refused | TLS not enabled | Set `TLS_CERT` and `TLS_KEY` env vars pointing to a PEM cert and key (see **Environment Variables**) |
+| Browser shows "Your connection is not private" | Self-signed certificate | Open `https://localhost:3000` directly and accept the cert warning, then reload the client page |
 
 ---
 
