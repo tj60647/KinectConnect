@@ -5,6 +5,7 @@
  */
 
 import { Server as HttpServer } from "http";
+import { Server as HttpsServer } from "https";
 import { WebSocketServer } from "ws";
 import { OutgoingMessage } from "./KinectAdapter";
 
@@ -16,7 +17,7 @@ export type SocketMessageHandler = (payload: unknown) => void;
 export class WebSocketBroadcaster {
   private readonly wss: WebSocketServer;
 
-  public constructor(httpServer: HttpServer) {
+  public constructor(httpServer: HttpServer | HttpsServer) {
     this.wss = new WebSocketServer({ server: httpServer });
   }
 
