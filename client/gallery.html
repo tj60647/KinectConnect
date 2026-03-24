@@ -34,6 +34,61 @@
         color: #a8bac8;
       }
 
+      .server-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+      }
+
+      .server-row label {
+        font-size: 0.8rem;
+        color: #a8bac8;
+      }
+
+      .server-row select,
+      .server-row input[type="text"] {
+        background: #172431;
+        color: #e6eef5;
+        border: 1px solid #274056;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+
+      .server-row select option {
+        background: #0f1720;
+      }
+
+      .server-row input[type="text"] {
+        width: 15rem;
+        cursor: text;
+      }
+
+      .server-row button {
+        background: #274056;
+        color: #e6eef5;
+        border: 1px solid #3a5a78;
+        padding: 0.35rem 0.8rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.82rem;
+      }
+
+      .server-row button:hover {
+        background: #3a5a78;
+      }
+
+      .mixed-content-warn {
+        font-size: 0.75rem;
+        color: #ffb67b;
+        padding: 0.25rem 0.6rem;
+        border: 1px solid rgba(255, 182, 123, 0.35);
+        border-radius: 6px;
+      }
+
       .grid {
         margin-top: 1.5rem;
         display: grid;
@@ -84,6 +139,21 @@
       <h1>KinectConnect Stage Gallery</h1>
       <p>Open any stage to run the same core app in guided tutorial mode.</p>
 
+      <div class="server-row">
+        <label for="serverPreset">Server:</label>
+        <select id="serverPreset">
+          <option value="auto">auto (same host)</option>
+          <option value="ws://localhost:3000">ws://localhost:3000</option>
+          <option value="ws://localhost:3001">ws://localhost:3001</option>
+          <option value="custom">custom…</option>
+        </select>
+        <input id="serverCustomUrl" type="text" placeholder="ws://localhost:3000" style="display:none" />
+        <button id="serverSave">Save</button>
+        <span id="mixedContentWarn" class="mixed-content-warn" style="display:none">
+          ⚠ HTTPS → ws:// may be blocked. Chrome/Edge: enable chrome://flags/#allow-insecure-localhost
+        </span>
+      </div>
+
       <section class="grid">
         <a class="card" href="./stages/stage-0-setup.html">
           <span class="label">Stage 0</span>
@@ -122,5 +192,73 @@
         </a>
       </section>
     </main>
+    <script>
+      (function () {
+        var select = document.getElementById("serverPreset");
+        var custom = document.getElementById("serverCustomUrl");
+        var btn = document.getElementById("serverSave");
+        var warn = document.getElementById("mixedContentWarn");
+
+        // Pre-fill controls from localStorage
+        var stored = localStorage.getItem("kinectServerUrl") || "";
+        if (!stored) {
+          select.value = "auto";
+        } else {
+          var matched = Array.from(select.options).some(function (opt) {
+            return opt.value === stored;
+          });
+          if (matched) {
+            select.value = stored;
+          }
+          if (!matched) {
+            select.value = "custom";
+            custom.value = stored;
+            custom.style.display = "";
+          }
+        }
+
+        function checkMixedContent() {
+          var url =
+            select.value === "auto"
+              ? ""
+              : select.value === "custom"
+                ? custom.value.trim()
+                : select.value;
+          warn.style.display =
+            location.protocol === "https:" && url.startsWith("ws://") ? "" : "none";
+        }
+        checkMixedContent();
+
+        select.addEventListener("change", function () {
+          if (select.value === "custom") {
+            custom.style.display = "";
+            custom.focus();
+          } else {
+            custom.style.display = "none";
+          }
+          checkMixedContent();
+        });
+
+        custom.addEventListener("input", checkMixedContent);
+
+        btn.addEventListener("click", function () {
+          var url =
+            select.value === "auto"
+              ? ""
+              : select.value === "custom"
+                ? custom.value.trim()
+                : select.value;
+          if (url) {
+            localStorage.setItem("kinectServerUrl", url);
+          } else {
+            localStorage.removeItem("kinectServerUrl");
+          }
+          btn.textContent = "Saved ✓";
+          setTimeout(function () {
+            btn.textContent = "Save";
+          }, 1500);
+        });
+      })();
+    </script>
   </body>
 </html>
