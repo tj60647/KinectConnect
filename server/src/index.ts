@@ -13,6 +13,11 @@ import { Kinect2Adapter } from "./Kinect2Adapter";
 import { MockAdapter } from "./MockAdapter";
 import { WebSocketBroadcaster } from "./WebSocketBroadcaster";
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { isSwitchSensorMessage } = require("../../shared/protocol") as {
+  isSwitchSensorMessage: (value: unknown) => value is { type: "switchSensor"; version: string };
+};
+
 const PORT = Number(process.env.PORT ?? 3000);
 const requestedVersion = parseSensorVersion(process.env.KINECT_VERSION ?? "2");
 
@@ -21,12 +26,13 @@ const server = createServer(app);
 const broadcaster = new WebSocketBroadcaster(server);
 
 app.use(express.static(path.resolve(__dirname, "../../client")));
+app.use("/shared", express.static(path.resolve(__dirname, "../../shared")));
 
 let adapter = createAdapter(requestedVersion);
 initializeAdapter(adapter);
 
 broadcaster.onClientConnected((message) => {
-  if (!isSwitchMessage(message)) {
+  if (!isSwitchSensorMessage(message)) {
     return;
   }
 
@@ -101,13 +107,4 @@ function parseSensorVersion(value: string): SensorVersion {
   }
 
   return "mock";
-}
-
-function isSwitchMessage(value: unknown): value is { type: "switchSensor"; version: string } {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const maybe = value as { type?: unknown; version?: unknown };
-  return maybe.type === "switchSensor" && typeof maybe.version === "string";
 }

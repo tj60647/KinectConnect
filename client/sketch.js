@@ -78,6 +78,7 @@
     gestureLabel: "none",
     depthCache: {},
     colorCache: {},
+    protocolChecked: false,
   };
 
   function setBadge(text) {
@@ -192,6 +193,18 @@
         msg = JSON.parse(event.data);
       } catch {
         return;
+      }
+
+      // Check protocol version on the first stamped message so students can
+      // spot server/client mismatches quickly in the browser console.
+      if (!state.protocolChecked && msg.protocolVersion) {
+        state.protocolChecked = true;
+        const KinectProtocol = global.KinectProtocol;
+        if (KinectProtocol && msg.protocolVersion !== KinectProtocol.PROTOCOL_VERSION) {
+          console.warn(
+            `[KinectConnect] Protocol version mismatch: server=${msg.protocolVersion}, client=${KinectProtocol.PROTOCOL_VERSION}. Some features may not work as expected.`
+          );
+        }
       }
 
       if (msg.type === "sensorInfo") {

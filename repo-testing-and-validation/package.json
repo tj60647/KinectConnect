@@ -1,0 +1,12 @@
+{
+  "name": "kinectconnect-tests",
+  "version": "1.0.0",
+  "description": "Test suite for KinectConnect — validates protocol contracts, adapter behaviour, client compatibility, and repo structure.",
+  "scripts": {
+    "test": "jest",
+    "pretest": "npm --prefix ../server run build"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
