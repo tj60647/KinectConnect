@@ -165,9 +165,17 @@
     }
   }
 
-  function connectSocket() {
+  function getServerUrl() {
+    const stored = localStorage.getItem("kinectServerUrl");
+    if (stored) {
+      return stored;
+    }
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${protocol}://${window.location.host}`);
+    return `${protocol}://${window.location.host}`;
+  }
+
+  function connectSocket() {
+    const ws = new WebSocket(getServerUrl());
     state.ws = ws;
 
     ws.addEventListener("open", () => {

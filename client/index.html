@@ -94,6 +94,51 @@
         border-color: var(--accent-soft);
       }
 
+      .server-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.25rem;
+      }
+
+      .server-row label {
+        font-family: "Space Mono", monospace;
+        font-size: 0.78rem;
+        opacity: 0.75;
+      }
+
+      .server-row select,
+      .server-row input[type="text"] {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.45rem 0.75rem;
+        border-radius: 999px;
+        font-family: "Space Mono", monospace;
+        font-size: 0.78rem;
+        cursor: pointer;
+      }
+
+      .server-row select option {
+        background: #0f1a24;
+        color: #fff;
+      }
+
+      .server-row input[type="text"] {
+        width: 16rem;
+        cursor: text;
+      }
+
+      .mixed-content-warn {
+        font-family: "Space Mono", monospace;
+        font-size: 0.75rem;
+        color: #ffb67b;
+        padding: 0.3rem 0.65rem;
+        border: 1px solid rgba(255, 182, 123, 0.4);
+        border-radius: 999px;
+      }
+
       .layout {
         display: grid;
         gap: 0.8rem;
@@ -169,6 +214,20 @@
           <a href="./gallery.html" class="badge" style="text-decoration:none;">Open Stage Gallery</a>
           <span class="badge" id="connectionBadge">Connecting...</span>
         </div>
+        <div class="server-row">
+          <label for="serverPreset">Server:</label>
+          <select id="serverPreset">
+            <option value="auto">auto (same host)</option>
+            <option value="ws://localhost:3000">ws://localhost:3000</option>
+            <option value="ws://localhost:3001">ws://localhost:3001</option>
+            <option value="custom">custom…</option>
+          </select>
+          <input id="serverCustomUrl" type="text" placeholder="ws://localhost:3000" style="display:none" />
+          <button id="serverConnect">Connect</button>
+          <span id="mixedContentWarn" class="mixed-content-warn" style="display:none">
+            ⚠ HTTPS → ws:// may be blocked. Chrome/Edge: enable chrome://flags/#allow-insecure-localhost
+          </span>
+        </div>
       </header>
 
       <section class="layout">
@@ -188,6 +247,73 @@
       </section>
     </main>
 
+    <script>
+      (function () {
+        var select = document.getElementById("serverPreset");
+        var custom = document.getElementById("serverCustomUrl");
+        var btn = document.getElementById("serverConnect");
+        var warn = document.getElementById("mixedContentWarn");
+
+        // Pre-fill controls from localStorage
+        var stored = localStorage.getItem("kinectServerUrl") || "";
+        if (!stored) {
+          select.value = "auto";
+        } else {
+          var matched = Array.from(select.options).some(function (opt) {
+            return opt.value === stored;
+          });
+          if (matched) {
+            select.value = stored;
+          }
+          if (!matched) {
+            select.value = "custom";
+            custom.value = stored;
+            custom.style.display = "";
+          }
+        }
+
+        // Show mixed-content warning when on HTTPS and targeting plain ws://
+        function checkMixedContent() {
+          var url =
+            select.value === "auto"
+              ? ""
+              : select.value === "custom"
+                ? custom.value.trim()
+                : select.value;
+          var isHttps = location.protocol === "https:";
+          var isInsecureWs = url.startsWith("ws://");
+          warn.style.display = isHttps && isInsecureWs ? "" : "none";
+        }
+        checkMixedContent();
+
+        select.addEventListener("change", function () {
+          if (select.value === "custom") {
+            custom.style.display = "";
+            custom.focus();
+          } else {
+            custom.style.display = "none";
+          }
+          checkMixedContent();
+        });
+
+        custom.addEventListener("input", checkMixedContent);
+
+        btn.addEventListener("click", function () {
+          var url =
+            select.value === "auto"
+              ? ""
+              : select.value === "custom"
+                ? custom.value.trim()
+                : select.value;
+          if (url) {
+            localStorage.setItem("kinectServerUrl", url);
+          } else {
+            localStorage.removeItem("kinectServerUrl");
+          }
+          location.reload();
+        });
+      })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/p5@1.11.2/lib/p5.min.js"></script>
     <script src="/shared/protocol.js"></script>
     <script src="./depthRenderer.js"></script>
