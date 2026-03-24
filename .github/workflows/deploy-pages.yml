@@ -30,6 +30,25 @@ jobs:
           cp -r client/. _site/
           cp shared/protocol.js _site/shared/protocol.js
 
+      - name: Delete existing Pages artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+            });
+            for (const artifact of artifacts.data.artifacts) {
+              if (artifact.name === 'github-pages') {
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id,
+                });
+              }
+            }
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
