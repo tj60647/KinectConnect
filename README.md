@@ -43,6 +43,23 @@ Then open `http://localhost:3000/gallery.html` in your browser to pick a stage, 
 
 ---
 
+## Hosted Gallery
+
+The static client is published to GitHub Pages on every push to `main`:
+
+**<https://tj60647.github.io/KinectConnect/gallery.html>**
+
+The gallery and all stage pages load directly from Pages. Because the page is served over `https://` but your Kinect server runs locally over plain WebSockets (`ws://`), you must tell the gallery where your server is:
+
+1. Open the gallery URL above.
+2. In the **Server** dropdown, select `ws://localhost:3000` (or whichever port your server is on).
+3. Click **Save**.
+4. Click any stage — the stage will connect to your local server.
+
+> Chrome and Edge may block the `https:` → `ws://` mixed-content connection by default. If the WebSocket never connects, enable **chrome://flags/#allow-insecure-localhost** or run the server behind a local TLS proxy.
+
+---
+
 ## Getting Started Checklist
 
 Follow these steps in order the first time you set up KinectConnect:
