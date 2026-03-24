@@ -37,7 +37,7 @@ Layer a learning-stage hierarchy on top of the existing server/client architectu
 
 ---
 
-## Phase C — Shared versioned message protocol 🔲
+## Phase C — Shared versioned message protocol ✅
 
 Define a single source of truth for every WebSocket message shape so server and client stay in sync as the codebase evolves and so tests can validate message contracts.
 
@@ -63,7 +63,7 @@ Define a single source of truth for every WebSocket message shape so server and 
 
 ---
 
-## Phase D — Test Harness 🔲
+## Phase D — Test Harness ✅
 
 Create `repo-testing-and-validation/` modeled on the reference repo's test suite. Goal: 100+ passing tests that a learner can run to verify their repo is intact.
 
@@ -88,7 +88,7 @@ repo-testing-and-validation/
 
 ---
 
-## Phase E — Learner Runbook 🔲
+## Phase E — Learner Runbook ✅
 
 Expand `README.md` with a full onboarding checklist and troubleshooting guide so a design student can get running without help.
 

@@ -8,6 +8,9 @@ import { Server as HttpServer } from "http";
 import { WebSocketServer } from "ws";
 import { OutgoingMessage } from "./KinectAdapter";
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { PROTOCOL_VERSION } = require("../../shared/protocol") as { PROTOCOL_VERSION: string };
+
 export type SocketMessageHandler = (payload: unknown) => void;
 
 export class WebSocketBroadcaster {
@@ -31,7 +34,8 @@ export class WebSocketBroadcaster {
   }
 
   public broadcast(message: OutgoingMessage): void {
-    const payload = JSON.stringify(message);
+    const stamped: Record<string, unknown> = { ...message, protocolVersion: PROTOCOL_VERSION };
+    const payload = JSON.stringify(stamped);
 
     for (const client of this.wss.clients) {
       if (client.readyState === client.OPEN) {
