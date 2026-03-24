@@ -1,0 +1,126 @@
+<!doctype html>
+<!--
+  KinectConnect
+  Copyright (c) 2026 Thomas J McLeish
+  Licensed under the MIT License.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KinectConnect Gallery</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #0f1720;
+        color: #e6eef5;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        padding: 2rem 1rem 3rem;
+      }
+
+      .wrap {
+        width: min(1000px, 100%);
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: clamp(1.4rem, 3vw, 2.1rem);
+      }
+
+      p {
+        margin: 0;
+        color: #a8bac8;
+      }
+
+      .grid {
+        margin-top: 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 0.9rem;
+      }
+
+      a.card {
+        display: block;
+        text-decoration: none;
+        background: #172431;
+        border: 1px solid #274056;
+        border-radius: 10px;
+        padding: 1rem;
+        color: inherit;
+      }
+
+      a.card:hover {
+        border-color: #4c89b6;
+        background: #1b2b3a;
+      }
+
+      .label {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #ffb67b;
+        margin-bottom: 0.35rem;
+      }
+
+      .title {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .desc {
+        margin-top: 0.4rem;
+        font-size: 0.9rem;
+        color: #bad0e1;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <h1>KinectConnect Stage Gallery</h1>
+      <p>Open any stage to run the same core app in guided tutorial mode.</p>
+
+      <section class="grid">
+        <a class="card" href="./stages/stage-0-setup.html">
+          <span class="label">Stage 0</span>
+          <h2 class="title">Setup and Mock Mode</h2>
+          <p class="desc">Verify browser rendering and WebSocket flow without hardware.</p>
+        </a>
+
+        <a class="card" href="./stages/stage-1-color.html">
+          <span class="label">Stage 1</span>
+          <h2 class="title">Color Stream</h2>
+          <p class="desc">Focus on reading and drawing only the color camera stream.</p>
+        </a>
+
+        <a class="card" href="./stages/stage-2-depth.html">
+          <span class="label">Stage 2</span>
+          <h2 class="title">Depth Stream</h2>
+          <p class="desc">Visualize depth as false color and discuss near/far mapping.</p>
+        </a>
+
+        <a class="card" href="./stages/stage-3-skeleton.html">
+          <span class="label">Stage 3</span>
+          <h2 class="title">Skeleton and Gesture</h2>
+          <p class="desc">Overlay joints and detect a simple raised-hand gesture.</p>
+        </a>
+
+        <a class="card" href="./stages/stage-4-toggle.html">
+          <span class="label">Stage 4</span>
+          <h2 class="title">Sensor Toggle and Capability Compare</h2>
+          <p class="desc">Switch Kinect v1/v2/mock and examine feature differences live.</p>
+        </a>
+
+        <a class="card" href="./index.html">
+          <span class="label">Free Play</span>
+          <h2 class="title">Full Dual-Sensor Demo</h2>
+          <p class="desc">Open the full app with all views and controls enabled.</p>
+        </a>
+      </section>
+    </main>
+  </body>
+</html>

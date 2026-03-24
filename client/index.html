@@ -1,0 +1,197 @@
+<!doctype html>
+<!--
+  KinectConnect
+  Copyright (c) 2026 Thomas J McLeish
+  Licensed under the MIT License.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KinectConnect - Classroom Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-a: #0f1a24;
+        --bg-b: #1f3d4f;
+        --panel: rgba(245, 248, 250, 0.88);
+        --ink: #0f1a24;
+        --accent: #ff6a3d;
+        --accent-soft: #ffb899;
+        --line: rgba(15, 26, 36, 0.15);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Archivo", sans-serif;
+        color: #f5f8fa;
+        background:
+          radial-gradient(90vw 60vh at 15% 15%, rgba(255, 106, 61, 0.25), transparent 60%),
+          radial-gradient(60vw 50vh at 80% 90%, rgba(127, 198, 255, 0.25), transparent 70%),
+          linear-gradient(135deg, var(--bg-a), var(--bg-b));
+      }
+
+      .page {
+        width: min(1200px, 100%);
+        margin: 0 auto;
+        padding: 1rem;
+      }
+
+      .header {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .title {
+        margin: 0;
+        font-size: clamp(1.4rem, 3.5vw, 2.6rem);
+        letter-spacing: 0.02em;
+      }
+
+      .sub {
+        margin: 0;
+        font-family: "Space Mono", monospace;
+        opacity: 0.9;
+        font-size: 0.9rem;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      button {
+        border: 1px solid transparent;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        padding: 0.6rem 0.85rem;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      button.is-active {
+        background: var(--accent);
+        border-color: var(--accent-soft);
+      }
+
+      .layout {
+        display: grid;
+        gap: 0.8rem;
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        background: var(--panel);
+        color: var(--ink);
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        padding: 0.8rem;
+        backdrop-filter: blur(3px);
+      }
+
+      #canvasWrap {
+        width: 100%;
+        min-height: 320px;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #071018;
+      }
+
+      .meta h2 {
+        margin: 0 0 0.4rem;
+        font-size: 1.05rem;
+      }
+
+      .meta p {
+        margin: 0.2rem 0;
+        font-size: 0.92rem;
+      }
+
+      .meta ul {
+        margin: 0.4rem 0 0;
+        padding-left: 1.1rem;
+      }
+
+      .meta li {
+        margin: 0.25rem 0;
+        font-size: 0.9rem;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: #dceaf7;
+        color: #0f1a24;
+        font-family: "Space Mono", monospace;
+        font-size: 0.78rem;
+        padding: 0.2rem 0.55rem;
+      }
+
+      @media (min-width: 960px) {
+        .layout {
+          grid-template-columns: 2fr 1fr;
+          align-items: start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <h1 class="title">KinectConnect: Dual-Sensor Teaching Demo</h1>
+        <p class="sub">TypeScript + WebSockets + p5.js. Built for beginner design students.</p>
+        <p class="sub" id="stageLabel">Stage: Free Play</p>
+        <div class="controls">
+          <button id="btnKinect1" data-version="1">Use Kinect v1</button>
+          <button id="btnKinect2" data-version="2" class="is-active">Use Kinect v2</button>
+          <button id="btnMock" data-version="mock">Use Mock Sensor</button>
+          <a href="./gallery.html" class="badge" style="text-decoration:none;">Open Stage Gallery</a>
+          <span class="badge" id="connectionBadge">Connecting...</span>
+        </div>
+      </header>
+
+      <section class="layout">
+        <article class="panel">
+          <div id="canvasWrap"></div>
+        </article>
+
+        <aside class="panel meta">
+          <h2>Sensor Status</h2>
+          <p id="sensorTitle">Waiting for sensor info...</p>
+          <p id="gestureStatus">Gesture: none</p>
+          <h2>Available Features</h2>
+          <ul id="featureList"></ul>
+          <h2>Notes</h2>
+          <ul id="noteList"></ul>
+        </aside>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.2/lib/p5.min.js"></script>
+    <script src="./depthRenderer.js"></script>
+    <script src="./colorRenderer.js"></script>
+    <script src="./skeletonRenderer.js"></script>
+    <script src="./sketch.js"></script>
+  </body>
+</html>
