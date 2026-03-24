@@ -37,7 +37,7 @@ npm run install:server
 npm run dev
 ```
 
-Then open `client/gallery.html` in your browser to pick a stage, or open `client/index.html` directly for Free Play.
+Then open `http://localhost:3000/gallery.html` in your browser to pick a stage, or navigate to `http://localhost:3000` directly for Free Play.
 
 > If you have real hardware and want to enable native Kinect support, run `npm run install:server:full` instead. This requires Visual Studio Build Tools with the C++ workload.
 
@@ -51,7 +51,7 @@ Follow these steps in order the first time you set up KinectConnect:
 2. **Clone or download this repo** — `git clone https://github.com/tj60647/KinectConnect.git` then `cd KinectConnect`.
 3. **Install server dependencies** — run `npm run install:server` from the repo root. This skips the native Kinect addons so no C++ build tools are required.
 4. **Start the dev server** — run `npm run dev`. You should see `KinectConnect server listening on http://localhost:3000`.
-5. **Open the gallery** — navigate to `http://localhost:3000/gallery.html` in your browser (Chrome or Edge recommended).
+5. **Open the gallery** — navigate to `http://localhost:3000/gallery.html` in your browser (Chrome or Edge recommended). The gallery includes a **Server** dropdown if you need to point at a different host or port — leave it on `auto (same host)` for a local setup.
 6. **Click Stage 0** — the stage redirects to the main app in Mock mode. No hardware is needed.
 7. **Verify mock frames appear** — open browser DevTools (F12 → Console). You should see no errors. The canvas should show animated color and depth frames within a few seconds.
 
@@ -76,14 +76,22 @@ KinectConnect/
 │       ├── stage-2-depth.html
 │       ├── stage-3-skeleton.html
 │       └── stage-4-toggle.html
-└── server/
-    └── src/
-        ├── index.ts              ← Express + WebSocket server entry point
-        ├── KinectAdapter.ts      ← Shared adapter interface
-        ├── Kinect1Adapter.ts     ← Kinect v1 implementation
-        ├── Kinect2Adapter.ts     ← Kinect v2 implementation
-        ├── MockAdapter.ts        ← Software mock (no hardware needed)
-        └── WebSocketBroadcaster.ts
+├── shared/
+│   └── protocol.js           ← UMD module: MESSAGE_TYPES, PROTOCOL_VERSION, validators
+├── server/
+│   └── src/
+│       ├── index.ts              ← Express + WebSocket server entry point
+│       ├── KinectAdapter.ts      ← Shared adapter interface
+│       ├── Kinect1Adapter.ts     ← Kinect v1 implementation
+│       ├── Kinect2Adapter.ts     ← Kinect v2 implementation
+│       ├── MockAdapter.ts        ← Software mock (no hardware needed)
+│       └── WebSocketBroadcaster.ts
+└── repo-testing-and-validation/
+    └── tests/
+        ├── protocol.test.js      ← Message shape & version contract tests
+        ├── adapters.test.js      ← MockAdapter behaviour tests
+        ├── client-compat.test.js ← sketch.js browser-compatibility checks
+        └── docs-structure.test.js← README, gallery, and stage shim presence
 ```
 
 ---
@@ -113,6 +121,49 @@ KinectConnect/
 
 ---
 
+## Shared Protocol
+
+`shared/protocol.js` is the single source of truth for every WebSocket message shape. It is a UMD module that loads without a bundler in both environments:
+
+- **Node.js / server:** `const { MESSAGE_TYPES } = require('../../shared/protocol')`
+- **Browser / client:** `<script src="/shared/protocol.js">` → `window.KinectProtocol`
+
+Key exports:
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `MESSAGE_TYPES` | Object | Frozen map of all message type strings (`sensorInfo`, `colorFrame`, `depthFrame`, `bodyFrame`, `error`, `switchSensor`) |
+| `PROTOCOL_VERSION` | String | Semver string (`"1.0.0"`). Server stamps this on every outgoing message; client logs a warning on mismatch |
+| `isSensorInfoMessage(msg)` | Function | Validates a `sensorInfo` message (checks `type`, `version`, `title`, `features`, `notes`) |
+| `isFrameMessage(msg)` | Function | Validates a `colorFrame` or `depthFrame` message (checks `type`, `width`, `height`, `data`) |
+| `isBodyFrameMessage(msg)` | Function | Validates a `bodyFrame` message (checks `type`, `bodies`) |
+| `isErrorMessage(msg)` | Function | Validates an `error` message (checks `type`, `message`) |
+| `isSwitchSensorMessage(msg)` | Function | Validates a `switchSensor` message (checks `type`, `version`) |
+
+---
+
+## Running the Tests
+
+The `repo-testing-and-validation/` directory contains a Jest test suite that verifies protocol contracts, adapter behaviour, client compatibility, and repo structure.
+
+```bash
+# Build the server first, then run all tests
+cd repo-testing-and-validation
+npm install
+npm test
+```
+
+> `npm test` automatically runs `npm --prefix ../server run build` before Jest. The first time you run the tests you must have Visual Studio Build Tools installed (or be on Mac/Linux where the TypeScript compile step still works). If you have already compiled the server once with `npm run build` from the repo root, that compiled output will be reused.
+
+| Test file | What it checks |
+|-----------|---------------|
+| `protocol.test.js` | `MESSAGE_TYPES` constants, `PROTOCOL_VERSION` semver format, each validator accepts/rejects correctly shaped objects |
+| `adapters.test.js` | `MockAdapter` emits `sensorInfo` on `open()`, emits frames after `start()`, stops after `stop()` |
+| `client-compat.test.js` | `sketch.js` contains no `require()` or `process.` globals; `STAGE_CONFIGS` has all required keys and fields |
+| `docs-structure.test.js` | `README.md` has required headings; gallery and all 5 stage shim files exist; root `package.json` has required scripts |
+
+---
+
 ## Stage Guide
 
 Each stage is a focused slice of the full KinectConnect demo. Open the stage from the gallery, then try the experiments listed below.
@@ -121,16 +172,16 @@ Each stage is a focused slice of the full KinectConnect demo. Open the stage fro
 You should see two animated panels (colour and depth) filled with synthetic data. No hardware is attached; the server generates fake frames so you can verify that WebSockets, p5.js, and the rendering pipeline all work. Try opening DevTools → Network → WS to watch the raw message stream arrive.
 
 **Stage 1 — Color Stream**  
-Only the left (colour) panel is active. The Kinect v2 is locked on; the depth and skeleton panels are hidden. Try changing the `rgba` calculation inside `MockAdapter.ts` to swap the colour channels and observe the result live.
+Only the left (colour) panel is active. The sensor is hardcoded to Kinect v2 and sensor switching is disabled for this stage (the server falls back to Mock automatically if no hardware is connected); the depth and skeleton panels are hidden. Try changing the pixel colour calculation inside `MockAdapter.ts` to swap the colour channels and observe the result live.
 
 **Stage 2 — Depth Stream**  
-Only the right (depth) panel is active. Pixel brightness maps to distance in millimetres. Try adjusting the colour mapping in `depthRenderer.js` — swap the grayscale `map()` call for a hue-based one to create a false-colour depth image.
+Only the right (depth) panel is active. Pixel brightness maps to distance in millimetres. Like Stage 1, the sensor is hardcoded to Kinect v2 with no switching (falls back to Mock if unavailable). Try adjusting the colour mapping in `depthRenderer.js` — swap the grayscale `map()` call for a hue-based one to create a false-colour depth image.
 
 **Stage 3 — Skeleton and Gesture**  
 All three renderers are on. A synthetic stick figure walks across the canvas. The right-hand raise gesture is already detected; try adding a second gesture condition (e.g., both hands raised) and display it in the gesture status panel.
 
 **Stage 4 — Sensor Toggle and Capability Compare**  
-The sensor-switch buttons are enabled. Click between Kinect v1, v2, and Mock to compare the `sensorInfo` capability lists in the sidebar. If you have real hardware connected, this stage will attempt to open it and fall back to Mock automatically if it fails.
+The sensor-switch buttons are enabled. Click between Kinect v1, v2, and Mock to compare the `sensorInfo` feature lists in the sidebar. If you have real hardware connected, this stage will attempt to open it and fall back to Mock automatically if it fails.
 
 **Free Play**  
 All streams and controls are enabled. Use this mode for open exploration, critique sessions, or demonstrating the full sensor pipeline to a class.
