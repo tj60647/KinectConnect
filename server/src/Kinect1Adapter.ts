@@ -43,9 +43,16 @@ export class Kinect1Adapter implements KinectAdapter {
 
     // Some versions auto-open when constructed. Others expose open().
     if (typeof this.device.open === "function") {
-      return this.device.open();
+      const opened = this.device.open();
+      if (opened) {
+        console.log("[Kinect1Adapter] Sensor opened successfully.");
+      } else {
+        console.warn("[Kinect1Adapter] open() returned false — check that the sensor is connected and the OpenNI driver is installed.");
+      }
+      return opened;
     }
 
+    console.log("[Kinect1Adapter] Sensor opened (auto-open on construct).");
     return true;
   }
 
@@ -76,6 +83,7 @@ export class Kinect1Adapter implements KinectAdapter {
 
     this.device.start?.("depth");
     this.device.start?.("video");
+    console.log("[Kinect1Adapter] Depth and video streams started.");
   }
 
   public stop(): void {
@@ -108,6 +116,7 @@ export class Kinect1Adapter implements KinectAdapter {
     }
 
     this.device = null;
+    console.log("[Kinect1Adapter] Sensor stopped and closed.");
   }
 
   public getSensorInfo(): SensorInfoMessage {

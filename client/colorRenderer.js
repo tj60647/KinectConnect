@@ -5,50 +5,28 @@
  */
 
 (function attachColorRenderer(global) {
-  function ensureImageCache(cache, p, width, height) {
-    if (!cache.image || cache.width !== width || cache.height !== height) {
-      cache.image = p.createImage(width, height);
-      cache.width = width;
-      cache.height = height;
+  // Color frames are delivered as MJPEG — a continuous HTTP stream of JPEG images
+  // that the browser decodes natively inside a plain <img> element. We only need
+  // to draw that element onto the p5 canvas each frame. No pixel loops required.
+  //
+  // Note: a streaming <img> never sets .complete = true (the connection stays open
+  // indefinitely), so we check naturalWidth > 0 instead to detect the first frame.
+  function drawColorStream(p, imgElement, canvasRect) {
+    if (!imgElement || imgElement.naturalWidth === 0) {
+      return false;
     }
 
-    return cache.image;
-  }
-
-  function drawColorFrame(p, frame, canvasRect, cache) {
-    if (!frame || !frame.dataBytes) {
-      return;
-    }
-
-    const image = ensureImageCache(cache, p, frame.width, frame.height);
-    image.loadPixels();
-
-    // Kinect v2 color is commonly BGRA. Kinect v1 in this demo is treated as RGB.
-    if (frame.sensorVersion === 2) {
-      for (let i = 0; i < frame.width * frame.height; i += 1) {
-        const source = i * 4;
-        const dest = i * 4;
-        image.pixels[dest] = frame.dataBytes[source + 2];
-        image.pixels[dest + 1] = frame.dataBytes[source + 1];
-        image.pixels[dest + 2] = frame.dataBytes[source];
-        image.pixels[dest + 3] = 255;
-      }
-    } else {
-      for (let i = 0; i < frame.width * frame.height; i += 1) {
-        const source = i * 3;
-        const dest = i * 4;
-        image.pixels[dest] = frame.dataBytes[source];
-        image.pixels[dest + 1] = frame.dataBytes[source + 1];
-        image.pixels[dest + 2] = frame.dataBytes[source + 2];
-        image.pixels[dest + 3] = 255;
-      }
-    }
-
-    image.updatePixels();
-    p.image(image, canvasRect.x, canvasRect.y, canvasRect.w, canvasRect.h);
+    p.drawingContext.drawImage(
+      imgElement,
+      canvasRect.x,
+      canvasRect.y,
+      canvasRect.w,
+      canvasRect.h
+    );
+    return true;
   }
 
   global.ColorRenderer = {
-    drawColorFrame,
+    drawColorStream,
   };
 })(window);

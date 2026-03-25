@@ -237,6 +237,13 @@
           <div id="canvasWrap"></div>
         </article>
 
+        <!--
+          Color frames arrive as MJPEG from /stream/color.
+          The browser keeps this connection open and decodes each JPEG natively.
+          The p5 sketch reads this element in its draw loop — it never needs to be visible.
+        -->
+        <img id="colorStream" src="/stream/color" alt="" style="display:none" />
+
         <aside class="panel meta">
           <h2>Sensor Status</h2>
           <p id="sensorTitle">Waiting for sensor info...</p>

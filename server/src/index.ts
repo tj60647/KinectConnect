@@ -9,10 +9,11 @@ import * as fs from "fs";
 import { createServer as createHttpServer } from "http";
 import { createServer as createHttpsServer } from "https";
 import path from "path";
-import { KinectAdapter, SensorVersion } from "./KinectAdapter";
+import { KinectAdapter, OutgoingMessage, SensorVersion } from "./KinectAdapter";
 import { Kinect1Adapter } from "./Kinect1Adapter";
 import { Kinect2Adapter } from "./Kinect2Adapter";
 import { MockAdapter } from "./MockAdapter";
+import { MjpegBroadcaster } from "./MjpegBroadcaster";
 import { WebSocketBroadcaster } from "./WebSocketBroadcaster";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -45,14 +46,38 @@ function createTlsServer() {
 const server = useTls ? createTlsServer() : createHttpServer(app);
 
 const broadcaster = new WebSocketBroadcaster(server);
+const mjpeg = new MjpegBroadcaster();
 
 app.use(express.static(path.resolve(__dirname, "../../client")));
 app.use("/shared", express.static(path.resolve(__dirname, "../../shared")));
 
+// Color frames are served as MJPEG (multipart JPEG) over a plain HTTP stream.
+// The browser renders it natively in an <img> element — no WebSocket or JS decoder needed.
+app.get("/stream/color", (_req, res) => {
+  mjpeg.addClient(res);
+});
+
+// Route frames: color goes to MJPEG HTTP stream, everything else over WebSocket.
+// This keeps large video data off the WebSocket and prevents heap exhaustion.
+function routeFrame(message: OutgoingMessage): void {
+  if (message.type === "colorFrame") {
+    mjpeg.pushFrame(message);
+  } else {
+    broadcaster.broadcast(message);
+  }
+}
+
 let adapter = createAdapter(requestedVersion);
 initializeAdapter(adapter, requestedVersion);
 
-broadcaster.onClientConnected((message) => {
+// When a new client connects, immediately send them the current sensor state so
+// their UI syncs without needing to request it or trigger a server-side adapter switch.
+broadcaster.onClientJoined((sendToClient) => {
+  sendToClient(adapter.getSensorInfo());
+});
+
+// Handle explicit sensor-switch requests from clients (e.g. Stage 4 toggle buttons).
+broadcaster.onClientMessage((message) => {
   if (!isSwitchSensorMessage(message)) {
     return;
   }
@@ -77,6 +102,7 @@ server.listen(PORT, () => {
 });
 
 function switchAdapter(version: SensorVersion): void {
+  console.log(`[KinectConnect] Sensor switch requested → version: ${version}`);
   const next = createAdapter(version);
 
   try {
@@ -96,7 +122,7 @@ function initializeAdapter(nextAdapter: KinectAdapter, requested: SensorVersion)
     const sdkHint = getKinectSdkHint(requested);
     const fallback = new MockAdapter();
     fallback.open();
-    fallback.start((message) => broadcaster.broadcast(message));
+    fallback.start(routeFrame);
     adapter = fallback;
 
     if (sdkHint) {
@@ -114,8 +140,9 @@ function initializeAdapter(nextAdapter: KinectAdapter, requested: SensorVersion)
     return;
   }
 
-  nextAdapter.start((message) => broadcaster.broadcast(message));
+  nextAdapter.start(routeFrame);
   broadcaster.broadcast(nextAdapter.getSensorInfo());
+  console.log(`[KinectConnect] ${nextAdapter.title} is active.`);
 }
 
 function createAdapter(version: SensorVersion): KinectAdapter {

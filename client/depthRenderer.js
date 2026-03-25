@@ -5,14 +5,22 @@
  */
 
 (function attachDepthRenderer(global) {
-  function ensureImageCache(cache, p, width, height) {
-    if (!cache.image || cache.width !== width || cache.height !== height) {
-      cache.image = p.createImage(width, height);
+  // We maintain our own Canvas2D instead of using p5.Image so we can set
+  // willReadFrequently: true on the context. This tells the browser to keep
+  // the pixel buffer CPU-readable, eliminating the repeated console warning.
+  // We then blit the finished canvas onto the p5 canvas with drawImage().
+  function ensureCache(cache, width, height) {
+    if (!cache.canvas || cache.width !== width || cache.height !== height) {
+      cache.canvas = document.createElement("canvas");
+      cache.canvas.width = width;
+      cache.canvas.height = height;
+      cache.ctx = cache.canvas.getContext("2d", { willReadFrequently: true });
+      cache.imageData = cache.ctx.createImageData(width, height);
       cache.width = width;
       cache.height = height;
     }
 
-    return cache.image;
+    return cache;
   }
 
   function drawDepthFrame(p, frame, canvasRect, cache) {
@@ -20,8 +28,8 @@
       return;
     }
 
-    const image = ensureImageCache(cache, p, frame.width, frame.height);
-    image.loadPixels();
+    const c = ensureCache(cache, frame.width, frame.height);
+    const pixels = c.imageData.data;
 
     for (let i = 0; i < frame.width * frame.height; i += 1) {
       const source = i * 2;
@@ -29,14 +37,14 @@
       const normalized = mapDepthTo01(depthMm);
       const color = depthColorMap(normalized);
       const dest = i * 4;
-      image.pixels[dest] = color.r;
-      image.pixels[dest + 1] = color.g;
-      image.pixels[dest + 2] = color.b;
-      image.pixels[dest + 3] = 255;
+      pixels[dest] = color.r;
+      pixels[dest + 1] = color.g;
+      pixels[dest + 2] = color.b;
+      pixels[dest + 3] = 255;
     }
 
-    image.updatePixels();
-    p.image(image, canvasRect.x, canvasRect.y, canvasRect.w, canvasRect.h);
+    c.ctx.putImageData(c.imageData, 0, 0);
+    p.drawingContext.drawImage(c.canvas, canvasRect.x, canvasRect.y, canvasRect.w, canvasRect.h);
   }
 
   function mapDepthTo01(depthMm) {

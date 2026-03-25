@@ -73,11 +73,10 @@
     features: [],
     notes: [],
     latestDepthFrame: null,
-    latestColorFrame: null,
     latestBodyFrame: null,
     gestureLabel: "none",
     depthCache: {},
-    colorCache: {},
+    colorStreamEl: null,
     protocolChecked: false,
   };
 
@@ -179,11 +178,9 @@
     state.ws = ws;
 
     ws.addEventListener("open", () => {
+      // The server owns the adapter — don't switch it on connect.
+      // The server will broadcast sensorInfo immediately, which syncs the UI.
       setBadge("Connected");
-
-      const target = stageConfig.forcedSensor || state.activeButtonVersion;
-      updateActiveButtons(target);
-      sendSwitchMessage(target);
     });
 
     ws.addEventListener("close", () => {
@@ -220,6 +217,8 @@
         state.sensorTitle = msg.title;
         state.features = Array.isArray(msg.features) ? msg.features : [];
         state.notes = Array.isArray(msg.notes) ? msg.notes : [];
+        // Sync the sensor toggle buttons to what the server is actually running.
+        updateActiveButtons(state.currentSensorVersion);
         setSensorText();
         return;
       }
@@ -232,16 +231,6 @@
 
       if (msg.type === "depthFrame") {
         state.latestDepthFrame = {
-          sensorVersion: msg.sensorVersion,
-          width: msg.width,
-          height: msg.height,
-          dataBytes: decodeBase64(msg.data),
-        };
-        return;
-      }
-
-      if (msg.type === "colorFrame") {
-        state.latestColorFrame = {
           sensorVersion: msg.sensorVersion,
           width: msg.width,
           height: msg.height,
@@ -289,6 +278,9 @@
         canvas.parent(wrap);
       }
 
+      // Grab the hidden <img> that receives the MJPEG color stream from the server.
+      state.colorStreamEl = document.getElementById("colorStream");
+
       setupButtons();
       setStageLabel();
       connectSocket();
@@ -315,14 +307,13 @@
         right: { x: p.width / 2, y: 0, w: p.width / 2, h: p.height },
       };
 
-      if (stageConfig.showColor && state.latestColorFrame) {
-        global.ColorRenderer.drawColorFrame(p, state.latestColorFrame, half.left, state.colorCache);
+      if (stageConfig.showColor) {
+        const drawn = global.ColorRenderer.drawColorStream(p, state.colorStreamEl, half.left);
+        if (!drawn) {
+          drawPlaceholderPanel(p, half.left, "Waiting for color stream...");
+        }
       } else {
-        drawPlaceholderPanel(
-          p,
-          half.left,
-          stageConfig.showColor ? "No color frame yet" : "Color hidden in this stage"
-        );
+        drawPlaceholderPanel(p, half.left, "Color hidden in this stage");
       }
 
       if (stageConfig.showDepth && state.latestDepthFrame) {

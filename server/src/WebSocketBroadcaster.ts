@@ -13,6 +13,7 @@ import { OutgoingMessage } from "./KinectAdapter";
 const { PROTOCOL_VERSION } = require("../../shared/protocol") as { PROTOCOL_VERSION: string };
 
 export type SocketMessageHandler = (payload: unknown) => void;
+export type ClientJoinedHandler = (sendToClient: (message: OutgoingMessage) => void) => void;
 
 export class WebSocketBroadcaster {
   private readonly wss: WebSocketServer;
@@ -21,7 +22,28 @@ export class WebSocketBroadcaster {
     this.wss = new WebSocketServer({ server: httpServer });
   }
 
-  public onClientConnected(handler: SocketMessageHandler): void {
+  // Fires once per new connection. Use this to push current state (e.g. sensorInfo)
+  // to just the newly connected client without affecting everyone else.
+  public onClientJoined(handler: ClientJoinedHandler): void {
+    this.wss.on("connection", (socket) => {
+      console.log(`[WebSocket] Client connected. Total clients: ${this.wss.clients.size}`);
+
+      socket.on("close", () => {
+        console.log(`[WebSocket] Client disconnected. Total clients: ${this.wss.clients.size}`);
+      });
+
+      const sendToClient = (message: OutgoingMessage): void => {
+        if (socket.readyState === socket.OPEN) {
+          const stamped: Record<string, unknown> = { ...message, protocolVersion: PROTOCOL_VERSION };
+          socket.send(JSON.stringify(stamped));
+        }
+      };
+
+      handler(sendToClient);
+    });
+  }
+
+  public onClientMessage(handler: SocketMessageHandler): void {
     this.wss.on("connection", (socket) => {
       socket.on("message", (raw) => {
         try {

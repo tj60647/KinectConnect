@@ -53,6 +53,7 @@ export class MockAdapter implements KinectAdapter {
   }
 
   public start(broadcast: BroadcastFn): void {
+    console.log("[MockAdapter] Synthetic streams started (no hardware required).");
     // This simulation mode is useful in classrooms where only a few groups have hardware.
     this.depthTimer = setInterval(() => {
       const width = 512;
@@ -140,6 +141,7 @@ export class MockAdapter implements KinectAdapter {
       clearInterval(this.bodyTimer);
       this.bodyTimer = null;
     }
+    console.log("[MockAdapter] Synthetic streams stopped.");
   }
 
   public getSensorInfo(): SensorInfoMessage {

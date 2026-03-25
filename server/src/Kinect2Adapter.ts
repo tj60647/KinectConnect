@@ -84,13 +84,20 @@ export class Kinect2Adapter implements KinectAdapter {
   public open(): boolean {
     const Kinect2Runtime = loadKinect2Module();
     if (!Kinect2Runtime) {
+      // loadKinect2Module() already logged the reason.
       return false;
     }
 
     this.kinect = new Kinect2Runtime();
 
     // Kinect v2 requires Windows + Kinect for Windows SDK 2.0 + USB 3.0.
-    return this.kinect.open();
+    const opened = this.kinect.open();
+    if (opened) {
+      console.log("[Kinect2Adapter] Sensor opened successfully.");
+    } else {
+      console.warn("[Kinect2Adapter] open() returned false — verify the sensor is plugged in via USB 3.0 and recognised in Device Manager.");
+    }
+    return opened;
   }
 
   public start(broadcast: BroadcastFn): void {
@@ -139,6 +146,7 @@ export class Kinect2Adapter implements KinectAdapter {
     this.kinect.openDepthReader();
     this.kinect.openColorReader();
     this.kinect.openBodyReader();
+    console.log("[Kinect2Adapter] Depth, color, and body readers opened. Streaming.");
   }
 
   public stop(): void {
@@ -173,6 +181,7 @@ export class Kinect2Adapter implements KinectAdapter {
     }
 
     this.kinect = null;
+    console.log("[Kinect2Adapter] Sensor stopped and closed.");
   }
 
   public getSensorInfo(): SensorInfoMessage {
@@ -207,7 +216,9 @@ export class Kinect2Adapter implements KinectAdapter {
 function loadKinect2Module(): (new () => Kinect2RuntimeInstance) | null {
   try {
     return require("kinect2") as new () => Kinect2RuntimeInstance;
-  } catch {
+  } catch (err) {
+    // Log the real error so students can diagnose native addon vs SDK vs USB issues.
+    console.warn(`[Kinect2Adapter] Failed to load kinect2 module: ${(err as Error).message}`);
     return null;
   }
 }
