@@ -73,4 +73,5 @@ export interface KinectAdapter {
   start(broadcast: BroadcastFn): void;
   stop(): void;
   getSensorInfo(): SensorInfoMessage;
+  setQuality?(quality: string): void;
 }

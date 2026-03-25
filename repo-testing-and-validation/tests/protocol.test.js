@@ -289,3 +289,49 @@ describe("isSwitchSensorMessage()", () => {
     expect(isSwitchSensorMessage({ type: "switchSensor", version: 2 })).toBe(false);
   });
 });
+
+// =============================================================================
+// 8. isSetQualityMessage  (Phase F)
+// =============================================================================
+
+const { isSetQualityMessage } = require("../../shared/protocol");
+
+describe("isSetQualityMessage()", () => {
+  const valid = { type: "setQuality", quality: "medium" };
+
+  test('accepts a valid setQuality message with quality "low"', () => {
+    expect(isSetQualityMessage({ type: "setQuality", quality: "low" })).toBe(true);
+  });
+
+  test('accepts a valid setQuality message with quality "medium"', () => {
+    expect(isSetQualityMessage(valid)).toBe(true);
+  });
+
+  test('accepts a valid setQuality message with quality "full"', () => {
+    expect(isSetQualityMessage({ type: "setQuality", quality: "full" })).toBe(true);
+  });
+
+  test("rejects null", () => {
+    expect(isSetQualityMessage(null)).toBe(false);
+  });
+
+  test("rejects wrong type", () => {
+    expect(isSetQualityMessage({ type: "switchSensor", quality: "medium" })).toBe(false);
+  });
+
+  test('rejects invalid quality value "ultra"', () => {
+    expect(isSetQualityMessage({ type: "setQuality", quality: "ultra" })).toBe(false);
+  });
+
+  test("rejects missing quality field", () => {
+    expect(isSetQualityMessage({ type: "setQuality" })).toBe(false);
+  });
+});
+
+// MESSAGE_TYPES.setQuality is present (Phase F)
+describe("MESSAGE_TYPES.setQuality (Phase F)", () => {
+  test("MESSAGE_TYPES.setQuality is a non-empty string", () => {
+    expect(typeof MESSAGE_TYPES.setQuality).toBe("string");
+    expect(MESSAGE_TYPES.setQuality.length).toBeGreaterThan(0);
+  });
+});

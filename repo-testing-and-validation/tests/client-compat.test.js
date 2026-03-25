@@ -150,6 +150,23 @@ describe("sketch.js — STAGE_CONFIGS required fields per entry", () => {
 });
 
 // =============================================================================
+// 8. STAGE_CONFIGS — Phase F fields present
+// =============================================================================
+
+describe("sketch.js — STAGE_CONFIGS Phase F fields", () => {
+  const PHASE_F_FIELDS = ["frameRate", "quality"];
+
+  let code;
+  beforeAll(() => { code = read(SKETCH); });
+
+  for (const field of PHASE_F_FIELDS) {
+    test(`STAGE_CONFIGS entries reference the "${field}" field`, () => {
+      expect(code).toMatch(new RegExp(`\\b${field}\\b`));
+    });
+  }
+});
+
+// =============================================================================
 // 7. JavaScript syntax validity
 // =============================================================================
 

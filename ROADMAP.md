@@ -104,14 +104,14 @@ Expand `README.md` with a full onboarding checklist and troubleshooting guide so
 
 ---
 
-## Phase F — Runtime Hardening ⬜
+## Phase F — Runtime Hardening ✅
 
 Optional improvements for critique sessions and performance. Not required for the core teaching workflow.
 
-- **Frame throttling** — add a `frameRate` cap (default 15 fps) configurable via URL param (`?fps=30`) and `STAGE_CONFIGS`
-- **Startup diagnostics panel** — small overlay in `index.html` showing: server connected ✓, sensor detected ✓, protocol version match ✓
-- **Recording mode** — capture a sequence of frames to a local JSON blob for offline critique playback; triggered by a keyboard shortcut
-- **Resolution profiles** — `low` / `medium` / `full` quality modes per stage to reduce bandwidth for classroom WiFi
+- **Frame throttling** — `frameRate` cap per `STAGE_CONFIGS` (default 15 fps for stages 0–3, 30 fps for stage 4 and Free Play), overridable via `?fps=N` URL param (1–120). Throttling is client-side: frames that arrive within the interval are silently dropped.
+- **Startup diagnostics panel** — small overlay in `index.html` positioned over the canvas showing: server connected ✓, sensor detected ✓, protocol version match ✓, and a ⏺ REC indicator when recording is active.
+- **Recording mode** — press **R** to start/stop capturing a frame sequence; on stop a `kinectconnect-recording-<ts>.json` file is downloaded automatically. Body frames are stored in full (small JSON); color/depth frames are recorded as metadata-only entries (type, dimensions, timestamp) to keep file size reasonable. Capped at 600 entries.
+- **Resolution profiles** — `quality` field per `STAGE_CONFIGS` (`"low"` / `"medium"` / `"full"`), overridable via `?quality=` URL param. Client sends a `setQuality` WS message on connect; server calls `adapter.setQuality()`. `MockAdapter` generates smaller frames at `"low"` (256×212 depth, 320×180 color) and larger frames at `"full"` (1280×720 color). Protocol bumped to `1.1.0`.
 
 ---
 
@@ -124,4 +124,4 @@ A (root) → B (stages) → C (protocol) → D (tests)
 F (hardening) — independent
 ```
 
-Phases A and B are complete. C is the prerequisite for good protocol tests in D. E can proceed in parallel with C/D. F is independent and lowest priority.
+Phases A and B are complete. C is the prerequisite for good protocol tests in D. E can proceed in parallel with C/D. F is now complete.

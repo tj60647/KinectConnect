@@ -47,16 +47,39 @@ export class MockAdapter implements KinectAdapter {
   private colorTimer: NodeJS.Timeout | null = null;
   private bodyTimer: NodeJS.Timeout | null = null;
   private frameCount = 0;
+  private quality: "low" | "medium" | "full" = "medium";
 
   public open(): boolean {
     return true;
   }
 
+  public setQuality(quality: string): void {
+    if (quality === "low" || quality === "medium" || quality === "full") {
+      this.quality = quality;
+    }
+  }
+
+  private getDepthDimensions(): { width: number; height: number } {
+    if (this.quality === "low") {
+      return { width: 256, height: 212 };
+    }
+    return { width: 512, height: 424 };
+  }
+
+  private getColorDimensions(): { width: number; height: number } {
+    if (this.quality === "low") {
+      return { width: 320, height: 180 };
+    }
+    if (this.quality === "full") {
+      return { width: 1280, height: 720 };
+    }
+    return { width: 640, height: 360 };
+  }
+
   public start(broadcast: BroadcastFn): void {
     // This simulation mode is useful in classrooms where only a few groups have hardware.
     this.depthTimer = setInterval(() => {
-      const width = 512;
-      const height = 424;
+      const { width, height } = this.getDepthDimensions();
       const depth = Buffer.alloc(width * height * 2);
 
       for (let y = 0; y < height; y += 1) {
@@ -81,8 +104,7 @@ export class MockAdapter implements KinectAdapter {
     }, 33);
 
     this.colorTimer = setInterval(() => {
-      const width = 640;
-      const height = 360;
+      const { width, height } = this.getColorDimensions();
       const rgba = Buffer.alloc(width * height * 4);
 
       for (let y = 0; y < height; y += 1) {

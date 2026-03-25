@@ -16,8 +16,9 @@ import { MockAdapter } from "./MockAdapter";
 import { WebSocketBroadcaster } from "./WebSocketBroadcaster";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { isSwitchSensorMessage } = require("../../shared/protocol") as {
+const { isSwitchSensorMessage, isSetQualityMessage } = require("../../shared/protocol") as {
   isSwitchSensorMessage: (value: unknown) => value is { type: "switchSensor"; version: string };
+  isSetQualityMessage: (value: unknown) => value is { type: "setQuality"; quality: string };
 };
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -53,12 +54,15 @@ let adapter = createAdapter(requestedVersion);
 initializeAdapter(adapter, requestedVersion);
 
 broadcaster.onClientConnected((message) => {
-  if (!isSwitchSensorMessage(message)) {
+  if (isSwitchSensorMessage(message)) {
+    const nextVersion = parseSensorVersion(String(message.version));
+    switchAdapter(nextVersion);
     return;
   }
 
-  const nextVersion = parseSensorVersion(String(message.version));
-  switchAdapter(nextVersion);
+  if (isSetQualityMessage(message)) {
+    adapter.setQuality?.(message.quality);
+  }
 });
 
 server.listen(PORT, () => {

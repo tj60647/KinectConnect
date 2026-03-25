@@ -162,6 +162,35 @@
         background: #071018;
       }
 
+      .canvas-wrap-outer {
+        position: relative;
+      }
+
+      #diagPanel {
+        position: absolute;
+        bottom: 0.75rem;
+        right: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.2rem;
+        pointer-events: none;
+      }
+
+      .diag-item {
+        background: rgba(7, 16, 24, 0.82);
+        color: #c8dce9;
+        font-family: "Space Mono", monospace;
+        font-size: 0.68rem;
+        padding: 0.18rem 0.5rem;
+        border-radius: 4px;
+      }
+
+      .diag-rec {
+        color: #ff6a3d;
+        font-weight: 700;
+      }
+
       .meta h2 {
         margin: 0 0 0.4rem;
         font-size: 1.05rem;
@@ -234,7 +263,15 @@
 
       <section class="layout">
         <article class="panel">
-          <div id="canvasWrap"></div>
+          <div class="canvas-wrap-outer">
+            <div id="canvasWrap"></div>
+            <div id="diagPanel">
+              <span class="diag-item" id="diagWs">⏳ WS: Connecting…</span>
+              <span class="diag-item" id="diagSensor">– Sensor: none</span>
+              <span class="diag-item" id="diagProto">– Protocol: checking…</span>
+              <span class="diag-item diag-rec" id="diagRec" style="display:none">⏺ REC</span>
+            </div>
+          </div>
         </article>
 
         <aside class="panel meta">

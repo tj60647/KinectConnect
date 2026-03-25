@@ -231,3 +231,56 @@ describe("MockAdapter — stop() without prior start()", () => {
     }).not.toThrow();
   });
 });
+
+// =============================================================================
+// 6. setQuality()  (Phase F)
+// =============================================================================
+
+describe("MockAdapter — setQuality()", () => {
+  test("setQuality is a function", () => {
+    const adapter = new MockAdapter();
+    expect(typeof adapter.setQuality).toBe("function");
+  });
+
+  test('setQuality("low") causes depthFrame dimensions to shrink', (done) => {
+    const adapter = new MockAdapter();
+    adapter.open();
+    adapter.setQuality("low");
+    adapter.start((msg) => {
+      if (msg.type === "depthFrame") {
+        adapter.stop();
+        expect(msg.width).toBeLessThan(512);
+        expect(msg.height).toBeLessThan(424);
+        done();
+      }
+    });
+  }, 500);
+
+  test('setQuality("full") causes colorFrame dimensions to increase', (done) => {
+    const adapter = new MockAdapter();
+    adapter.open();
+    adapter.setQuality("full");
+    adapter.start((msg) => {
+      if (msg.type === "colorFrame") {
+        adapter.stop();
+        expect(msg.width).toBeGreaterThan(640);
+        done();
+      }
+    });
+  }, 500);
+
+  test("setQuality ignores unknown quality values", () => {
+    const adapter = new MockAdapter();
+    adapter.open();
+    expect(() => adapter.setQuality("ultra")).not.toThrow();
+  });
+
+  test("setQuality can be called while adapter is running", (done) => {
+    const adapter = new MockAdapter();
+    adapter.open();
+    adapter.start(() => {});
+    expect(() => adapter.setQuality("low")).not.toThrow();
+    adapter.stop();
+    done();
+  });
+});

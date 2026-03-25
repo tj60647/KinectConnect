@@ -38,6 +38,7 @@
       bodyFrame: "bodyFrame",
       error: "error",
       switchSensor: "switchSensor",
+      setQuality: "setQuality",
     });
 
     /**
@@ -45,7 +46,7 @@
      * message shape.  The server stamps this on every outgoing message; the
      * client logs a warning when the versions do not match.
      */
-    var PROTOCOL_VERSION = "1.0.0";
+    var PROTOCOL_VERSION = "1.1.0";
 
     // -------------------------------------------------------------------------
     // Validator helpers
@@ -154,6 +155,23 @@
       return true;
     }
 
+    /**
+     * Returns true when msg looks like a valid setQuality message.
+     * Required fields: type ("setQuality"), quality ("low" | "medium" | "full")
+     */
+    function isSetQualityMessage(msg) {
+      if (!msg || typeof msg !== "object") {
+        return false;
+      }
+      if (msg.type !== MESSAGE_TYPES.setQuality) {
+        return false;
+      }
+      if (msg.quality !== "low" && msg.quality !== "medium" && msg.quality !== "full") {
+        return false;
+      }
+      return true;
+    }
+
     return {
       MESSAGE_TYPES: MESSAGE_TYPES,
       PROTOCOL_VERSION: PROTOCOL_VERSION,
@@ -162,6 +180,7 @@
       isBodyFrameMessage: isBodyFrameMessage,
       isErrorMessage: isErrorMessage,
       isSwitchSensorMessage: isSwitchSensorMessage,
+      isSetQualityMessage: isSetQualityMessage,
     };
   }
 );
