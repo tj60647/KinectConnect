@@ -65,6 +65,20 @@ The gallery and all stage pages load directly from Pages. Because the page is se
 
 ---
 
+## Deploy to Vercel
+
+The repo includes a `vercel.json` that configures the build automatically — no extra settings are needed in the Vercel dashboard.
+
+1. Go to [vercel.com](https://vercel.com) → **Add New Project** → **Import** the `KinectConnect` repository.
+2. Leave all settings at their defaults (Root Directory, Build Command, and Output Directory are all set by `vercel.json`).
+3. Click **Deploy**.
+
+The deployed URL will serve the gallery at `/` and all stage pages at their usual paths (e.g. `/stages/stage-0-setup.html`).
+
+> Because Vercel serves over `https://` but your local Kinect server runs as `ws://` by default, follow the same steps in the [Hosted Gallery](#hosted-gallery) section to configure your server URL and, if needed, enable WSS.
+
+---
+
 ## Getting Started Checklist
 
 Follow these steps in order the first time you set up KinectConnect:
