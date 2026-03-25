@@ -1,0 +1,6 @@
+{
+  "buildCommand": "mkdir -p client/shared && cp shared/protocol.js client/shared/protocol.js",
+  "outputDirectory": "client",
+  "framework": null,
+  "rewrites": [{ "source": "/", "destination": "/gallery.html" }]
+}
