@@ -24,6 +24,7 @@ A teaching workspace that bridges a Kinect sensor to a p5.js browser client over
 - **Node.js ≥ 18** — [nodejs.org](https://nodejs.org)
 - **Windows** — required for real Kinect hardware (v1 or v2 SDK only runs on Windows)
 - **Visual Studio Build Tools** with the "Desktop development with C++" workload — only needed if you want to connect real hardware; not needed for Mock mode
+- **Kinect v2 hardware setup guide** — see [KINECT_V2_SETUP.md](KINECT_V2_SETUP.md) for full SDK install, wiring, verifier steps, and troubleshooting
 
 ---
 
