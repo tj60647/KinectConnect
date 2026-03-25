@@ -50,7 +50,7 @@ app.use(express.static(path.resolve(__dirname, "../../client")));
 app.use("/shared", express.static(path.resolve(__dirname, "../../shared")));
 
 let adapter = createAdapter(requestedVersion);
-initializeAdapter(adapter);
+initializeAdapter(adapter, requestedVersion);
 
 broadcaster.onClientConnected((message) => {
   if (!isSwitchSensorMessage(message)) {
@@ -86,22 +86,28 @@ function switchAdapter(version: SensorVersion): void {
   }
 
   adapter = next;
-  initializeAdapter(adapter);
+  initializeAdapter(adapter, version);
 }
 
-function initializeAdapter(nextAdapter: KinectAdapter): void {
+function initializeAdapter(nextAdapter: KinectAdapter, requested: SensorVersion): void {
   const opened = nextAdapter.open();
 
   if (!opened) {
+    const sdkHint = getKinectSdkHint(requested);
     const fallback = new MockAdapter();
     fallback.open();
     fallback.start((message) => broadcaster.broadcast(message));
     adapter = fallback;
 
+    if (sdkHint) {
+      console.warn(`[KinectConnect] ${sdkHint}`);
+    }
+
     broadcaster.broadcast({
       type: "error",
-      message:
-        `Could not open ${nextAdapter.title}. Switched to Mock mode so the tutorial can continue.`,
+      message: sdkHint
+        ? `Could not open ${nextAdapter.title}. ${sdkHint} Switched to Mock mode so the tutorial can continue.`
+        : `Could not open ${nextAdapter.title}. Switched to Mock mode so the tutorial can continue.`,
     });
 
     broadcaster.broadcast(adapter.getSensorInfo());
@@ -134,4 +140,29 @@ function parseSensorVersion(value: string): SensorVersion {
   }
 
   return "mock";
+}
+
+function getKinectSdkHint(requested: SensorVersion): string | null {
+  if (requested === "mock") {
+    return null;
+  }
+
+  if (process.platform !== "win32") {
+    return "Kinect hardware requires Windows and the matching Kinect SDK.";
+  }
+
+  if (requested === 2) {
+    const hasSdk = !!process.env.KINECTSDK20_DIR;
+    if (!hasSdk) {
+      return "Kinect SDK 2.0 may be missing. Install Kinect for Windows SDK 2.0 and reconnect the sensor.";
+    }
+    return null;
+  }
+
+  const hasSdk = !!process.env.KINECTSDK10_DIR;
+  if (!hasSdk) {
+    return "Kinect SDK 1.8 may be missing. Install Kinect for Windows SDK 1.8 and reconnect the sensor.";
+  }
+
+  return null;
 }

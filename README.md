@@ -30,12 +30,14 @@ A teaching workspace that bridges a Kinect sensor to a p5.js browser client over
 ## Quick Start
 
 ```bash
-# 1. Install server dependencies (skips native Kinect addons)
-npm run install:server
+# First time only (or after dependency changes)
+npm run setup
 
-# 2. Start the dev server
+# Everyday start
 npm run dev
 ```
+
+If you want a single first-run command, use `npm run dev:setup`.
 
 Then open `http://localhost:3000/gallery.html` in your browser to pick a stage, or navigate to `http://localhost:3000` directly for Free Play.
 
@@ -132,8 +134,11 @@ KinectConnect/
 
 | Script | What it does |
 |--------|-------------|
+| `npm run setup` | One-time setup alias for `install:server` |
+| `npm run setup:full` | One-time setup alias for `install:server:full` |
 | `npm run install:server` | Install server deps, skip native Kinect addons |
 | `npm run install:server:full` | Install everything including Kinect native addons |
+| `npm run dev:setup` | First-run helper: install deps, then start dev server |
 | `npm run dev` | Start server with ts-node (live reload friendly) |
 | `npm run build` | Compile TypeScript to `server/dist/` |
 | `npm run start` | Run compiled server from `server/dist/` |

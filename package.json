@@ -6,8 +6,11 @@
   "author": "Thomas J McLeish",
   "license": "MIT",
   "scripts": {
+    "setup": "npm run install:server",
+    "setup:full": "npm run install:server:full",
     "install:server": "npm --prefix server install --omit=optional",
     "install:server:full": "npm --prefix server install",
+    "dev:setup": "npm run setup && npm run dev",
     "dev": "npm --prefix server run dev",
     "build": "npm --prefix server run build",
     "start": "npm --prefix server run start"
