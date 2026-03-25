@@ -29,21 +29,29 @@
     }
 
     const c = ensureCache(cache, frame.width, frame.height);
-    const pixels = c.imageData.data;
 
-    for (let i = 0; i < frame.width * frame.height; i += 1) {
-      const source = i * 2;
-      const depthMm = frame.dataBytes[source] | (frame.dataBytes[source + 1] << 8);
-      const normalized = mapDepthTo01(depthMm);
-      const color = depthColorMap(normalized);
-      const dest = i * 4;
-      pixels[dest] = color.r;
-      pixels[dest + 1] = color.g;
-      pixels[dest + 2] = color.b;
-      pixels[dest + 3] = 255;
+    // Only recompute pixels when the frame object itself is new.
+    // The draw loop runs at 15fps but depth frames arrive from the server at
+    // up to 30fps — and on repeat draw calls with the same frame we'd be doing
+    // 217,088 pixel iterations for zero visual change.
+    if (frame !== cache.lastFrame) {
+      cache.lastFrame = frame;
+      const pixels = c.imageData.data;
+
+      for (let i = 0; i < frame.width * frame.height; i += 1) {
+        const source = i * 2;
+        const depthMm = frame.dataBytes[source] | (frame.dataBytes[source + 1] << 8);
+        const normalized = mapDepthTo01(depthMm);
+        const color = depthColorMap(normalized);
+        const dest = i * 4;
+        pixels[dest] = color.r;
+        pixels[dest + 1] = color.g;
+        pixels[dest + 2] = color.b;
+        pixels[dest + 3] = 255;
+      }
+
+      c.ctx.putImageData(c.imageData, 0, 0);
     }
-
-    c.ctx.putImageData(c.imageData, 0, 0);
 
     // Preserve source aspect ratio with letterboxing.
     const scale = Math.min(canvasRect.w / frame.width, canvasRect.h / frame.height);

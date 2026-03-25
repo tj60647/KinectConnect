@@ -18,13 +18,13 @@ const jpeg = require("jpeg-js") as {
 
 const BOUNDARY = "KinectColorFrame";
 
-// JPEG quality 75 is a good balance: a 1920x1080 frame typically compresses to
-// 100–300 KB vs ~11 MB raw/base64, while still looking good for a classroom demo.
-const JPEG_QUALITY = 75;
+// JPEG quality 60 keeps file size low (~80–180 KB at 1080p) which reduces both
+// encode time (pure-JS encoder) and per-frame GPU decode work on the client.
+const JPEG_QUALITY = 60;
 
-// Cap at ~15 fps to keep bandwidth manageable in a shared classroom setting.
-// At 300 KB/frame × 15 fps = ~4.5 MB/s vs 330 MB/s for raw WebSocket frames.
-const MIN_FRAME_GAP_MS = 1000 / 15;
+// 10 fps is plenty for a classroom depth/skeleton demo and halves the encode
+// CPU cost vs 15 fps. The p5 draw loop is capped to the same rate on the client.
+const MIN_FRAME_GAP_MS = 1000 / 10;
 
 export class MjpegBroadcaster {
   private readonly clients = new Set<Response>();

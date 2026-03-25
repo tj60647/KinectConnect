@@ -319,6 +319,11 @@
       // Grab the hidden <img> that receives the MJPEG color stream from the server.
       state.colorStreamEl = document.getElementById("colorStream");
 
+      // Cap the draw loop to match the MJPEG stream rate.
+      // Running at 60fps just re-blits the same image repeatedly between stream
+      // frames and hammers the GPU for no perceptible gain.
+      p.frameRate(10);
+
       setupButtons();
       setStageLabel();
       connectSocket();
