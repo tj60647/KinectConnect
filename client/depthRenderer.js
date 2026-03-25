@@ -44,7 +44,14 @@
     }
 
     c.ctx.putImageData(c.imageData, 0, 0);
-    p.drawingContext.drawImage(c.canvas, canvasRect.x, canvasRect.y, canvasRect.w, canvasRect.h);
+
+    // Preserve source aspect ratio with letterboxing.
+    const scale = Math.min(canvasRect.w / frame.width, canvasRect.h / frame.height);
+    const destW = frame.width * scale;
+    const destH = frame.height * scale;
+    const destX = canvasRect.x + (canvasRect.w - destW) / 2;
+    const destY = canvasRect.y + (canvasRect.h - destH) / 2;
+    p.drawingContext.drawImage(c.canvas, destX, destY, destW, destH);
   }
 
   function mapDepthTo01(depthMm) {

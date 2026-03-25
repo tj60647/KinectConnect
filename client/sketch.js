@@ -78,6 +78,7 @@
     depthCache: {},
     colorStreamEl: null,
     protocolChecked: false,
+    disconnecting: false,
   };
 
   function setBadge(text) {
@@ -173,6 +174,15 @@
     return `${protocol}://${window.location.host}`;
   }
 
+  // Converts the WebSocket server URL to an HTTP URL for the MJPEG color stream.
+  function getColorStreamUrl() {
+    const wsUrl = getServerUrl();
+    const httpUrl = wsUrl.startsWith("wss://")
+      ? wsUrl.replace("wss://", "https://")
+      : wsUrl.replace("ws://", "http://");
+    return `${httpUrl}/stream/color`;
+  }
+
   function connectSocket() {
     const ws = new WebSocket(getServerUrl());
     state.ws = ws;
@@ -180,10 +190,23 @@
     ws.addEventListener("open", () => {
       // The server owns the adapter — don't switch it on connect.
       // The server will broadcast sensorInfo immediately, which syncs the UI.
+      state.disconnecting = false;
+      if (state.colorStreamEl) {
+        state.colorStreamEl.src = getColorStreamUrl();
+      }
       setBadge("Connected");
     });
 
     ws.addEventListener("close", () => {
+      // Stop the MJPEG stream whenever the socket drops.
+      if (state.colorStreamEl) {
+        state.colorStreamEl.src = "";
+      }
+      if (state.disconnecting) {
+        // User-initiated disconnect — don't retry.
+        setBadge("Disconnected");
+        return;
+      }
       setBadge("Disconnected - retrying...");
       setTimeout(connectSocket, 2000);
     });
@@ -245,6 +268,21 @@
     });
   }
 
+  // Stop all streams immediately and prevent the auto-reconnect timer.
+  // The existing "Connect" button reloads the page to reconnect (useful when
+  // changing the server URL). For a soft reconnect on the same URL, call
+  // reconnect() programmatically.
+  function disconnect() {
+    state.disconnecting = true;
+    if (state.ws) {
+      state.ws.close();
+    }
+    if (state.colorStreamEl) {
+      state.colorStreamEl.src = "";
+    }
+    setBadge("Disconnected");
+  }
+
   function sendSwitchMessage(version) {
     if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
       return;
@@ -285,6 +323,12 @@
       setStageLabel();
       connectSocket();
       setSensorText();
+
+      // Wire the Disconnect button added in index.html.
+      const disconnectBtn = document.getElementById("serverDisconnect");
+      if (disconnectBtn) {
+        disconnectBtn.addEventListener("click", disconnect);
+      }
     };
 
     p.windowResized = () => {

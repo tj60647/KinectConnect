@@ -226,6 +226,7 @@
           </select>
           <input id="serverCustomUrl" type="text" placeholder="ws://localhost:3000" style="display:none" />
           <button id="serverConnect">Connect</button>
+          <button id="serverDisconnect">Disconnect</button>
           <span id="mixedContentWarn" class="mixed-content-warn" style="display:none">
             ⚠ HTTPS → ws:// may be blocked. Chrome/Edge: enable chrome://flags/#allow-insecure-localhost
           </span>
@@ -242,7 +243,7 @@
           The browser keeps this connection open and decodes each JPEG natively.
           The p5 sketch reads this element in its draw loop — it never needs to be visible.
         -->
-        <img id="colorStream" src="/stream/color" alt="" style="display:none" />
+        <img id="colorStream" alt="" style="display:none" />
 
         <aside class="panel meta">
           <h2>Sensor Status</h2>
